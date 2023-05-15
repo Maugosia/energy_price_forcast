@@ -21,7 +21,7 @@ def join_and_clean_day_ahead_data():
     print("\n\n")
     print(all_dataframe.head(100).tail(10))
 
-    zone_names = ["SDGE", "VEA", "PGAE", "SCE"]
+    zone_names = ["TH_NP15", "TH_SP15", "TH_ZP26"]
     single_zone_dataframes = []
     for zone_name in zone_names:
         single_zone_dataframe = all_dataframe[all_dataframe["zone"] == zone_name]
@@ -31,9 +31,9 @@ def join_and_clean_day_ahead_data():
         print(len(single_zone_dataframe), "\n")
 
         single_zone_dataframes.append(single_zone_dataframe)
-        single_zone_dataframe.to_csv(path_data + "/day_ahead/" + zone_name + "_data.csv")
+        single_zone_dataframe.to_csv(path_data + "/real_time/" + zone_name + "_data.csv")
 
-    all_dataframe.to_csv(path_data + "/day_ahead/" + "all_data.csv")
+    all_dataframe.to_csv(path_data + "/real_time/" + "all_data.csv")
 
 
 if __name__ == "__main__":
