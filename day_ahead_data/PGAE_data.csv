@@ -1,4 +1,4 @@
-,date,time,am-pm,price,zone
+time_idx,date,time,am-pm,price,zone
 0,1/1/2017,12:00:00,AM,32.94629,PGAE
 1,1/1/2017,1:00:00,AM,32.80283,PGAE
 2,1/1/2017,2:00:00,AM,32.6197,PGAE
