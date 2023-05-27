@@ -24,6 +24,16 @@ def load_data():
     )
     print(dataset[0])
 
+
+    dataloader = dataset.to_dataloader()
+    x,y = next(iter(dataloader))
+
+    print("x =", x)
+    print("\ny =", y)
+    print("\nsizes of x =")
+    for key, value in x.items():
+        print(f"\t{key} = {value.size()}")
+
 if __name__ == "__main__":
     load_data()
 
