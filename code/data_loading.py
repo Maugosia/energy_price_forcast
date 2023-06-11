@@ -6,7 +6,6 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 
-# TODO:  this function should probably return min_max_scaler object params as well
 def load_data(data_location_path, batch_size, lookback, test_proportion=0.2, validation_proportion=0.25):
     # -----------------------------------READ AND PREPARE DATA-------------------------------------------
     single_file_data = pd.read_csv(data_location_path, sep=" |,", engine='python',
@@ -26,21 +25,23 @@ def load_data(data_location_path, batch_size, lookback, test_proportion=0.2, val
     # Obtaining the Scale for the labels(usage data) so that output can be re-scaled to actual value during evaluation
     label_sc.fit(single_file_data["price"].values.reshape(-1, 1))
 
-    inputs = np.zeros((len(single_file_data) - lookback, lookback, single_file_data.shape[1]))
+    inputs = np.zeros((len(single_file_data) - lookback, lookback, np.shape(data)[1]))
     labels = np.zeros(len(single_file_data) - lookback)
 
     for i in range(lookback, len(data)):
         inputs[i - lookback] = data[i - lookback:i]
         labels[i - lookback] = data[i, 0]
-    inputs = inputs.reshape(-1, lookback, single_file_data.shape[1])
+    inputs = inputs.reshape(-1, lookback, np.shape(data)[1])
     labels = labels.reshape(-1, 1)
 
     # ----------------------------------TRAIN , TEST, VAL SPLIT:-----------------------------------------
     x_train_val, x_test, y_train_val, y_test = train_test_split(inputs, labels,
-                                                                test_size=test_proportion, random_state=123)
+                                                                test_size=test_proportion, random_state=123,
+                                                                shuffle=False)
 
     x_train, x_val, y_train, y_val = train_test_split(x_train_val, y_train_val,
-                                                      test_size=validation_proportion, random_state=123)
+                                                      test_size=validation_proportion, random_state=123,
+                                                      shuffle=False)
 
     len_train_data = y_train.shape[0]
     batch_normalized_len_train = int((np.floor(float(len_train_data)/float(batch_size))) * batch_size)
