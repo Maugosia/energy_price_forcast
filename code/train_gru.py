@@ -95,4 +95,6 @@ if __name__ == "__main__":
     # ANALYZE
     plot_evaluation_over_time([train_losses, val_losses], ["dane treningowe", "dane walidacyjne"],
                               "Krzywe uczenia modelu GRU", "funkcja kosztu")
+
+
     plt.show()
