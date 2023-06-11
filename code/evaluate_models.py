@@ -15,3 +15,6 @@ def plot_evaluation_over_time(data_lists, label_lists, title, evaluation_type):
     ax1.set_xlabel("krok uczenia")
     ax1.set_ylabel(evaluation_type)
     ax1.legend()
+
+
+# def inference_on_dataset(dataloader, model):
