@@ -2,7 +2,7 @@ from time import time
 import datetime
 import torch
 import torch.nn as nn
-from lipschitz_net import LipschitzNet
+from neural_architectures.lipschitz_net import LipschitzNet
 from data_loading import load_data
 from globals import DEVICE
 import os
@@ -20,7 +20,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
     output_dim = 1
     n_layers = 1
 
-    model = LipschitzNet(input_dim, hidden_dim, output_dim, 0.75, 0.75, 0.005, 0.005, dt=0.01)
+    model = LipschitzNet(input_dim, hidden_dim, output_dim, beta_a=1, beta_w=1, gamma_a=0.1, gamma_w=0.1, dt=0.01)
     model.to(DEVICE)
 
     criterion = nn.MSELoss()

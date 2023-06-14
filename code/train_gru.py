@@ -2,7 +2,7 @@ from time import time
 import datetime
 import torch
 import torch.nn as nn
-from gru_net import GRUNet
+from neural_architectures.gru_net import GRUNet
 from data_loading import load_data
 from globals import DEVICE
 import os
@@ -78,7 +78,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
 
 if __name__ == "__main__":
     # PARAMS
-    lr = 0.001
+    lr = 0.1
     batch_size = 64
     x_history_length = 128
     epochs = 10

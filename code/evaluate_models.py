@@ -15,8 +15,8 @@ def plot_evaluation_over_time(data_lists, label_lists, title, evaluation_type):
 
     ax1 = fig.add_subplot(1, 1, 1)
     for i, data in enumerate(data_lists):
-        ax1.plot(steps, data, linewidth=0, markersize=0)
-        ax1.scatter(steps, data, label=label_lists[i], s=0.5)
+        ax1.plot(steps, data)
+        ax1.scatter(steps, data, label=label_lists[i])
     ax1.set_xlabel("krok uczenia")
     ax1.set_ylabel(evaluation_type)
     ax1.legend()

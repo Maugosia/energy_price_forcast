@@ -1,0 +1,5 @@
+lr = 0.001
+beta_a = 0.85
+beta_w = 0.85
+gamma_a = 0.005
+gamma_w = 0.005
