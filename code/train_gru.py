@@ -16,6 +16,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
     train_loss_list = []
 
     input_dim = next(iter(training_data_loader))[0].shape[2]
+    print(next(iter(training_data_loader))[0].shape)
     output_dim = 1
     n_layers = 2
 
@@ -30,6 +31,8 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
     for epoch in range(1, n_epochs + 1):
         start_time = time()
         h = model.init_hidden(batch)
+        print("H from init", h.shape)
+
         avg_loss_train = 0.
         counter_train = 0
         model.train()
@@ -37,8 +40,13 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
             counter_train += 1
             h = h.data
             model.zero_grad()
-
+            print("X shape", x.shape)
+            print("H shape in loop", h.shape)
+            print("H shape in loop", h[0,0,:].reshape(1,256).shape)
+            print("Label shape in loop", label.shape)
             out, h = model(x.to(DEVICE).float(), h)
+            print("Out shape in loop", out.shape)
+            exit()
             loss = criterion(out, label.to(DEVICE).float())
             loss.backward()
             optimizer.step()

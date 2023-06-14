@@ -3,3 +3,5 @@ beta_a = 0.75
 beta_w = 0.75
 gamma_a = 0.005
 gamma_w = 0.005
+
+Average loss on test data (unscaled): 1893.8454190081322

@@ -25,13 +25,20 @@ def load_data(data_location_path, batch_size, lookback, test_proportion=0.2, val
     # Obtaining the Scale for the labels(usage data) so that output can be re-scaled to actual value during evaluation
     label_sc.fit(single_file_data["price"].values.reshape(-1, 1))
 
-    inputs = np.zeros((len(single_file_data) - lookback, lookback, np.shape(data)[1]))
     labels = np.zeros(len(single_file_data) - lookback)
 
-    for i in range(lookback, len(data)):
-        inputs[i - lookback] = data[i - lookback:i]
-        labels[i - lookback] = data[i, 0]
-    inputs = inputs.reshape(-1, lookback, np.shape(data)[1])
+    if lookback == 0:
+        inputs = np.zeros((len(single_file_data), np.shape(data)[1]))
+        for i in range(0, len(data)-1):
+            inputs[i] = data[i]
+            labels[i] = data[i+1]
+        inputs = inputs.reshape((-1, np.shape(data)[1]))
+    else:
+        inputs = np.zeros((len(single_file_data) - lookback, lookback, np.shape(data)[1]))
+        for i in range(lookback, len(data)):
+            inputs[i - lookback] = data[i - lookback:i]
+            labels[i - lookback] = data[i, 0]
+        inputs = inputs.reshape(-1, lookback, np.shape(data)[1])
     labels = labels.reshape(-1, 1)
 
     # ----------------------------------TRAIN , TEST, VAL SPLIT:-----------------------------------------

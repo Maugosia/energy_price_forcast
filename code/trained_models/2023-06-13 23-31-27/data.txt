@@ -1,1 +1,3 @@
 lr = 0.1
+
+Average loss on test data (unscaled): 7538.309305202194

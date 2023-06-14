@@ -2,7 +2,7 @@ from time import time
 import datetime
 import torch
 import torch.nn as nn
-from neural_architectures.lipschitz_net import LipschitzNet
+from neural_architectures.lipschitz_net_2 import LipschitzNetWithBatches
 from data_loading import load_data
 from globals import DEVICE
 import os
@@ -16,11 +16,11 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
     val_loss_list = []
     train_loss_list = []
     print("trainnig loader: ", next(iter(training_data_loader))[0].shape)
-    input_dim = next(iter(training_data_loader))[0].shape[0]
+    input_dim = next(iter(training_data_loader))[0].shape[2]
     output_dim = 1
     n_layers = 1
 
-    model = LipschitzNet(input_dim, hidden_dim, output_dim, beta_a=1, beta_w=1, gamma_a=0.1, gamma_w=0.1, dt=0.01)
+    model = LipschitzNetWithBatches(input_dim, hidden_dim, output_dim, beta_a=0.85, beta_w=0.85, gamma_a=0.01, gamma_w=0.01, dt=0.01)
     model.to(DEVICE)
 
     criterion = nn.MSELoss()
@@ -30,23 +30,28 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
     # Start training loop
     for epoch in range(1, n_epochs + 1):
         start_time = time()
-        # h = model.init_hidden(batch)
         avg_loss_train = 0.
         counter_train = 0
         model.train()
         model.init_hidden()
+        batch_counter = 0
         for x, label in training_data_loader:
+            batch_start_time = time()
             counter_train += 1
             # h = h.data
             model.zero_grad()
             optimizer.zero_grad()
+
             out = model(x.to(DEVICE).float())
+
             loss = criterion(out, label.to(DEVICE).float())
+
             loss.backward(retain_graph=True)
+            #print("Batch {} finished with time {}".format(batch_counter, time() - batch_start_time))
+            batch_counter = batch_counter + 1
             # loss.backward()
             optimizer.step()
             avg_loss_train += loss.item()
-
         avg_loss_val = 0.
         counter_val = 0
         model.eval()
@@ -86,9 +91,9 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
 if __name__ == "__main__":
     # PARAMS
     lr = 0.001
-    batch_size = 64
+    batch_size = 128
     x_history_length = 128
-    epochs = 20
+    epochs = 10
     path_data = "../day_ahead_data/PGAE_data.csv"
     folder_name = os.path.join("trained_models", "lipschitzNET", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
     os.makedirs(folder_name)
