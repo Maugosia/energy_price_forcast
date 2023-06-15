@@ -2,6 +2,7 @@ from torch import nn, Tensor, t, eye, zeros, ones, rand, matmul, flatten, distri
 from globals import DEVICE
 import math
 
+
 class LipschitzNetWithBatches(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, beta_a, beta_w, gamma_a, gamma_w, dt=0.001):
         super(LipschitzNetWithBatches, self).__init__()
@@ -26,7 +27,7 @@ class LipschitzNetWithBatches(nn.Module):
         # b = Tensor([1])
         # self.b = nn.Parameter(b)
         # nn.init.zeros_(self.b)
-#
+        #
         # u = Tensor(hidden_dim, input_dim)
         # self.U = nn.Parameter(u)
         # nn.init.kaiming_uniform_(self.U, a=math.sqrt(5))
@@ -50,8 +51,10 @@ class LipschitzNetWithBatches(nn.Module):
         batch_size = x.size(0)
         input_sequence_len = x.size(1)
 
-        self.A = (1 - self.beta_a) * (self.M_A + t(self.M_A)) + self.beta_a * (self.M_A - t(self.M_A)) - self.gamma_a * self.I
-        self.W = (1 - self.beta_w) * (self.M_W + t(self.M_W)) + self.beta_w * (self.M_W - t(self.M_W)) - self.gamma_w * self.I
+        self.A = (1 - self.beta_a) * (self.M_A + t(self.M_A)) + self.beta_a * (
+                    self.M_A - t(self.M_A)) - self.gamma_a * self.I
+        self.W = (1 - self.beta_w) * (self.M_W + t(self.M_W)) + self.beta_w * (
+                    self.M_W - t(self.M_W)) - self.gamma_w * self.I
         retVal = zeros((batch_size, self.D.out_features))
 
         for batch in range(batch_size):

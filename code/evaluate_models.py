@@ -17,17 +17,14 @@ def plot_evaluation_over_time(data_lists, label_lists, title, evaluation_type):
 
     ax1 = fig.add_subplot(1, 1, 1)
     for i, data in enumerate(data_lists):
-        #ax1.plot(steps, data)
-        #ax1.scatter(steps, data, label=label_lists[i])
+        ax1.plot(steps, data)
+        ax1.scatter(steps, data, label=label_lists[i])
 
-        ax1.plot(steps, data, linewidth=0, markersize=0)
-        ax1.scatter(steps, data, label=label_lists[i], s=0.5)
+        # ax1.plot(steps, data, linewidth=0, markersize=0)
+        # ax1.scatter(steps, data, label=label_lists[i], s=0.5)
     ax1.set_xlabel("krok uczenia")
     ax1.set_ylabel(evaluation_type)
     ax1.legend()
-    plt.show()
-
-# def inference_on_dataset(dataloader, model):
 
 
 def inference_on_dataset_GRU(model, test_data_loader, scaler, batch=64):
@@ -56,6 +53,8 @@ def inference_on_dataset_GRU(model, test_data_loader, scaler, batch=64):
     plot_evaluation_over_time([outs, labels], ["wartości przewidziane przez model", "wartości oczekiwane"],
                               "Wartości zwracane", "wartość")
     print("Average loss: ", avg_loss / len(test_data_loader))
+    return avg_loss / len(test_data_loader)
+
 
 def inference_on_dataset_Lipschitz(model, test_data_loader, scaler):
     criterion = nn.MSELoss()
@@ -67,8 +66,8 @@ def inference_on_dataset_Lipschitz(model, test_data_loader, scaler):
     for x, label in test_data_loader:
         model.zero_grad()
 
-        #old_shape = x.shape
-        #x = torch.from_numpy(scaler.inverse_transform(x.reshape(-1, 1)).reshape(old_shape))
+        # old_shape = x.shape
+        # x = torch.from_numpy(scaler.inverse_transform(x.reshape(-1, 1)).reshape(old_shape))
 
         out = model(x.to(DEVICE).float())
 
@@ -80,7 +79,6 @@ def inference_on_dataset_Lipschitz(model, test_data_loader, scaler):
 
         loss = criterion(out, label.to(DEVICE).float())
         avg_loss += loss.item()
-
 
     print(len(outs))
 

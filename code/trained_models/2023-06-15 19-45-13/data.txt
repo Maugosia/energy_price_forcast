@@ -1,0 +1,4 @@
+lr = 1e-05
+bat1ch_size = 64
+x history length = 128
+epochs = 20

@@ -7,18 +7,17 @@ from data_loading import load_data
 from globals import DEVICE
 import os
 import matplotlib.pyplot as plt
-from evaluate_models import plot_evaluation_over_time
+from evaluate_models import plot_evaluation_over_time, inference_on_dataset_GRU
 
 
-def train(training_data_loader, validation_data_loader, folder_path, learning_rate, hidden_dim=256, n_epochs=3, batch=64):
+def train(training_data_loader, validation_data_loader, folder_path, learning_rate,
+          input_dim, hidden_dim=256, output_dim=1, n_epochs=3, batch=64, n_layers=2):
     val_loss_min = 1000000
     val_loss_list = []
     train_loss_list = []
 
     input_dim = next(iter(training_data_loader))[0].shape[2]
     print(next(iter(training_data_loader))[0].shape)
-    output_dim = 1
-    n_layers = 2
 
     model = GRUNet(input_dim, hidden_dim, output_dim, n_layers)
     model.to(DEVICE)
@@ -31,7 +30,6 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
     for epoch in range(1, n_epochs + 1):
         start_time = time()
         h = model.init_hidden(batch)
-        print("H from init", h.shape)
 
         avg_loss_train = 0.
         counter_train = 0
@@ -40,13 +38,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
             counter_train += 1
             h = h.data
             model.zero_grad()
-            print("X shape", x.shape)
-            print("H shape in loop", h.shape)
-            print("H shape in loop", h[0,0,:].reshape(1,256).shape)
-            print("Label shape in loop", label.shape)
             out, h = model(x.to(DEVICE).float(), h)
-            print("Out shape in loop", out.shape)
-            exit()
             loss = criterion(out, label.to(DEVICE).float())
             loss.backward()
             optimizer.step()
@@ -70,14 +62,19 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
                        folder_path + "/GRU_layers_{}_hidden_{}_epoch_{}_batch_{}_history_{}.pt".format(
                            n_layers, hidden_dim, epoch, batch, x_history_length
                        ))
+            torch.save(model.state_dict(),
+                       folder_path + "/GRU_layers_best.pt")
 
         current_time = time()
         train_loss_list.append(avg_loss_train / len(training_data_loader))
         val_loss_list.append(avg_loss_val / len(validation_data_loader))
-        print("Epoch {}/{}, Train Loss: {}, Val Loss: {}".format(epoch,
-                                                                 n_epochs,
-                                                                 avg_loss_train / len(training_data_loader),
-                                                                 avg_loss_val / len(validation_data_loader)))
+        print("Epoch {}/{}, Train Loss: {}, Val Loss: {}, time taken {}".format(epoch,
+                                                                                n_epochs,
+                                                                                avg_loss_train / len(
+                                                                                    training_data_loader),
+                                                                                avg_loss_val / len(
+                                                                                    validation_data_loader),
+                                                                                current_time - start_time))
 
         epoch_times.append(current_time - start_time)
     print("Total Training Time: {} seconds".format(str(sum(epoch_times))))
@@ -85,24 +82,47 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
 
 
 if __name__ == "__main__":
-    # PARAMS
-    lr = 0.1
-    batch_size = 64
-    x_history_length = 128
-    epochs = 10
-    path_data = "../day_ahead_data/PGAE_data.csv"
-    folder_name = os.path.join("trained_models", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
-    os.makedirs(folder_name)
-    print("saving results to folder: ", folder_name)
+    for lr in [0.0001, 0.00001]:
+        # PARAMS
+        batch_size = 64
+        x_history_length = 128
+        hid_dim = 256
+        epochs = 20
+        out_dim = 1
+        num_of_layers = 2
 
-    # LOAD AND TRAIN
-    [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
-    gru_model, train_losses, val_losses = train(train_loader, val_loader, folder_name, lr,
-                                                batch=batch_size, n_epochs=epochs)
+        # PATHS
+        path_data = "../day_ahead_data/PGAE_data.csv"
+        # path_data = "../real_time_data/TH_NP15_data.csv"
+        folder_name = os.path.join("trained_models", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
+        os.makedirs(folder_name)
+        data_file_path = folder_name + "/data.txt"
+        print("saving results to folder: ", folder_name)
+        with open(data_file_path, 'w') as f:
+            f.write("lr = {}\n".format(lr))
+            f.write("bat1ch_size = {}\n".format(batch_size))
+            f.write("x history length = {}\n".format(x_history_length))
+            f.write("epochs = {}\n".format(epochs))
 
-    # ANALYZE
-    plot_evaluation_over_time([train_losses, val_losses], ["dane treningowe", "dane walidacyjne"],
-                              "Krzywe uczenia modelu GRU", "funkcja kosztu")
+        # LOAD AND TRAIN
+        [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
+        in_dim = next(iter(train_loader))[0].shape[2]
+        gru_model, train_losses, val_losses = train(train_loader, val_loader, folder_name, lr, input_dim=in_dim,
+                                                    hidden_dim=hid_dim, output_dim=out_dim,
+                                                    batch=batch_size, n_epochs=epochs, n_layers=num_of_layers)
 
+        # ANALYZE TRAINING PROCESS
+        plot_evaluation_over_time([train_losses, val_losses], ["dane treningowe", "dane walidacyjne"],
+                                  "Krzywe uczenia modelu GRU", "funkcja kosztu")
 
-    plt.show()
+        plt.savefig(folder_name + "/learning_curve.png")
+        plt.cla()
+
+        # INFERENCE ON TEST SET
+        best_model = GRUNet(in_dim, hid_dim, out_dim, num_of_layers)
+        best_model.load_state_dict(torch.load(folder_name + "/GRU_layers_best.pt"))
+        best_model.eval()
+
+        mse_test = inference_on_dataset_GRU(best_model, test_loader, label_transform, batch_size)
+        with open(data_file_path, 'a') as f:
+            f.write("\nMSE on test = {}\n".format(mse_test))

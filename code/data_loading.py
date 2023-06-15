@@ -6,11 +6,13 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 
-def load_data(data_location_path, batch_size, lookback, test_proportion=0.2, validation_proportion=0.25):
+def load_data(data_location_path, batch_size, lookback, test_proportion=0.2, validation_proportion=0.25,
+              head_size=54912):
     # -----------------------------------READ AND PREPARE DATA-------------------------------------------
     single_file_data = pd.read_csv(data_location_path, sep=" |,", engine='python',
                                    names=["date", "time", "am-pm", "price", "zone"], skiprows=[0])
 
+    single_file_data = single_file_data.head(head_size)
     single_file_data["group"] = 0
     single_file_data["time_idx"] = single_file_data.index
 
@@ -18,7 +20,7 @@ def load_data(data_location_path, batch_size, lookback, test_proportion=0.2, val
     batch_normalized_len = (np.floor(float(len_all_data)/float(batch_size))) * batch_size
     single_file_data = single_file_data.head(int(batch_normalized_len))
 
-    # --------------------------------------PREPROCESS DATA-------------------------------------------
+    # --------------------------------------PREPROCESS DATA----------------------------------------------
     sc = MinMaxScaler()
     label_sc = MinMaxScaler()
     data = sc.fit_transform(single_file_data["price"].values.reshape(-1, 1))
