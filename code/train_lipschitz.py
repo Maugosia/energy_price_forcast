@@ -8,19 +8,20 @@ from globals import DEVICE
 import os
 import matplotlib.pyplot as plt
 from evaluate_models import plot_evaluation_over_time
+from evaluate_models import inference_on_dataset_Lipschitz
 
 
 def train(training_data_loader, validation_data_loader, folder_path, learning_rate, hidden_dim=256, n_epochs=3,
-          batch=64):
+          output_dim=1, batch=64):
     val_loss_min = 1000000
     val_loss_list = []
     train_loss_list = []
     print("trainnig loader: ", next(iter(training_data_loader))[0].shape)
     input_dim = next(iter(training_data_loader))[0].shape[2]
-    output_dim = 1
     n_layers = 1
 
-    model = LipschitzNetWithBatches(input_dim, hidden_dim, output_dim, beta_a=0.85, beta_w=0.85, gamma_a=0.01, gamma_w=0.01, dt=0.01)
+    model = LipschitzNetWithBatches(input_dim, hidden_dim, output_dim, beta_a=0.85, beta_w=0.85, gamma_a=0.01,
+                                    gamma_w=0.01, dt=0.01)
     model.to(DEVICE)
 
     criterion = nn.MSELoss()
@@ -47,7 +48,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
             loss = criterion(out, label.to(DEVICE).float())
 
             loss.backward(retain_graph=True)
-            #print("Batch {} finished with time {}".format(batch_counter, time() - batch_start_time))
+            # print("Batch {} finished with time {}".format(batch_counter, time() - batch_start_time))
             batch_counter = batch_counter + 1
             # loss.backward()
             optimizer.step()
@@ -71,6 +72,8 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
                        folder_path + "/Lip_layers_{}_hidden_{}_epoch_{}_batch_{}_history_{}.pt".format(
                            n_layers, hidden_dim, epoch, batch, x_history_length
                        ))
+            torch.save(model.state_dict(),
+                       folder_path + "/LIP_layers_best.pt")
 
         current_time = time()
         train_loss_list.append(avg_loss_train / len(training_data_loader))
@@ -89,23 +92,45 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
 
 
 if __name__ == "__main__":
-    # PARAMS
-    lr = 0.001
-    batch_size = 128
-    x_history_length = 128
-    epochs = 10
-    path_data = "../day_ahead_data/PGAE_data.csv"
-    folder_name = os.path.join("trained_models", "lipschitzNET", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
-    os.makedirs(folder_name)
-    print("saving results to folder: ", folder_name)
+    for lr in [0.001, 0.0001]:
+        # PARAMS
+        batch_size = 128
+        x_history_length = 128
+        hidden_dim = 256
+        epochs = 10
+        output_dim = 1
 
-    # LOAD AND TRAIN
-    [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
-    gru_model, train_losses, val_losses = train(train_loader, val_loader, folder_name, lr,
-                                                batch=batch_size, n_epochs=epochs)
+        # PATHS
+        path_data = "../day_ahead_data/PGAE_data.csv"
+        folder_name = os.path.join("trained_models", "lipschitzNET", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
+        os.makedirs(folder_name)
+        print("saving results to folder: ", folder_name)
+        data_file_path = folder_name + "/data.txt"
+        with open(data_file_path, 'w') as f:
+            f.write("lr = {}\n".format(lr))
+            f.write("bat1ch_size = {}\n".format(batch_size))
+            f.write("x history length = {}\n".format(x_history_length))
+            f.write("epochs = {}\n".format(epochs))
 
-    # ANALYZE
-    plot_evaluation_over_time([train_losses, val_losses], ["dane treningowe", "dane walidacyjne"],
-                              "Krzywe uczenia modelu Lipschitz", "funkcja kosztu")
+        # LOAD AND TRAIN
+        [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
+        input_dim = next(iter(train_loader))[0].shape[2]
+        gru_model, train_losses, val_losses = train(train_loader, val_loader, folder_name, lr, hidden_dim=hidden_dim,
+                                                    batch=batch_size, n_epochs=epochs, output_dim=output_dim)
 
-    plt.show()
+        # ANALYZE
+        plot_evaluation_over_time([train_losses, val_losses], ["dane treningowe", "dane walidacyjne"],
+                                  "Krzywe uczenia modelu Lipschitz", "funkcja kosztu")
+
+        plt.savefig(folder_name + "/learning_curve.png")
+        plt.cla()
+
+        # INFERENCE ON TEST SET
+        best_model = LipschitzNetWithBatches(input_dim, hidden_dim, output_dim, beta_a=0.85, beta_w=0.85, gamma_a=0.01,
+                                             gamma_w=0.01, dt=0.01)
+        best_model.load_state_dict(torch.load(folder_name + "/LIP_layers_best.pt"))
+        best_model.eval()
+
+        mse_test = inference_on_dataset_Lipschitz(best_model, test_loader, label_transform, batch_size)
+        with open(data_file_path, 'a') as f:
+            f.write("\nMSE on test = {}\n".format(mse_test))

@@ -82,7 +82,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
 
 
 if __name__ == "__main__":
-    for lr in [0.0001, 0.00001]:
+    for lr in [0.0001]:
         # PARAMS
         batch_size = 64
         x_history_length = 128
@@ -92,8 +92,8 @@ if __name__ == "__main__":
         num_of_layers = 2
 
         # PATHS
-        path_data = "../day_ahead_data/PGAE_data.csv"
-        # path_data = "../real_time_data/TH_NP15_data.csv"
+        # path_data = "../day_ahead_data/PGAE_data.csv"
+        path_data = "../real_time_data/TH_NP15_data.csv"
         folder_name = os.path.join("trained_models", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
         os.makedirs(folder_name)
         data_file_path = folder_name + "/data.txt"

@@ -85,6 +85,7 @@ def inference_on_dataset_Lipschitz(model, test_data_loader, scaler):
     plot_evaluation_over_time([outs, labels], ["wartości przewidziane przez model", "wartości oczekiwane"],
                               "Wartości zwracane", "wartość")
     print("Average loss: ", avg_loss / len(test_data_loader))
+    return avg_loss / len(test_data_loader)
 
 
 def test_GRU():
