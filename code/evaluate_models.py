@@ -92,6 +92,7 @@ def inference_on_dataset_Lipschitz(model, test_data_loader, scaler):
 def calculateBiasGRU(model, test_data_loader, scaler, batch=64):
     criterion = nn.MSELoss()
     biasSum = 0
+    h = model.init_hidden(batch)
     for x, label in test_data_loader:
         h = h.data
         model.zero_grad()
@@ -101,7 +102,7 @@ def calculateBiasGRU(model, test_data_loader, scaler, batch=64):
         label = torch.from_numpy(scaler.inverse_transform(label))
         out = torch.from_numpy(scaler.inverse_transform(out.detach().numpy()))
         biasSum = biasSum + torch.sum(torch.sub(label, out))
-    bias = biasSum / len(test_data_loader) * batch
+    bias = biasSum / (len(test_data_loader) * batch)
     print("Bias: ", bias)
     return bias
 
@@ -114,12 +115,13 @@ def calculateBiasLipschitz(model, test_data_loader, scaler, batch=128):
         label = torch.from_numpy(scaler.inverse_transform(label))
         out = torch.from_numpy(scaler.inverse_transform(out.detach().numpy()))
         biasSum = biasSum + torch.sum(torch.sub(label, out))
-    bias = biasSum/(len(test_data_loader)*batch)
+    bias = biasSum / (len(test_data_loader) * batch)
     print("Bias: ", bias)
     return bias
 
+
 def test_GRU():
-    path_data = "../day_ahead_data/PGAE_data.csv"
+    path_data = "../real_time_data/TH_NP15_data.csv"
     batch_size = 64
     x_history_length = 128
     [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
@@ -131,13 +133,14 @@ def test_GRU():
 
     # PATH = "code/trained_models/2023-06-09 19-17-48/GRU_layers_2_hidden_256_epoch_2_batch_64_history_128.pt"
 
-    PATH = "trained_models/2023-06-13 23-31-27/GRU_layers_2_hidden_256_epoch_5_batch_64_history_128.pt"
+    PATH = "trained_models/2023-06-15 20-10-32/GRU_layers_best.pt"
 
     GRUmodel = GRUNet(input_dim, hidden_dim, output_dim, n_layers)
     GRUmodel.load_state_dict(torch.load(PATH))
     GRUmodel.eval()
-
-    inference_on_dataset_GRU(GRUmodel, test_loader, label_transform)
+    bias = calculateBiasGRU(GRUmodel, test_loader, label_transform)
+    print("bias = ", bias)
+    # inference_on_dataset_GRU(GRUmodel, test_loader, label_transform)
 
 
 def test_Lipschitz():
@@ -159,8 +162,8 @@ def test_Lipschitz():
     LipschitzModel.eval()
     LipschitzModel.init_hidden()
     calculateBiasLipschitz(LipschitzModel, test_loader, label_transform)
-    #inference_on_dataset_Lipschitz(LipschitzModel, test_loader, label_transform)
+    # inference_on_dataset_Lipschitz(LipschitzModel, test_loader, label_transform)
 
 
 if __name__ == "__main__":
-    test_Lipschitz()
+    test_GRU()
