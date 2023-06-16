@@ -29,7 +29,6 @@ def plot_evaluation_over_time(data_lists, label_lists, title, evaluation_type):
 
 def inference_on_dataset_GRU(model, test_data_loader, scaler, batch=64):
     criterion = nn.MSELoss()
-    criterion = nn.Loss
     avg_loss = 0
     h = model.init_hidden(batch)
 
@@ -121,7 +120,14 @@ def calculateBiasLipschitz(model, test_data_loader, scaler, batch=128):
 
 
 def test_GRU():
+    # best model intraday
     path_data = "../real_time_data/TH_NP15_data.csv"
+    path_model = "trained_models/BEST MODELS/GRU_layers_best_intraday.pt"
+
+    # best model day-ahead
+    # path_data = "../day_ahead_data/PGAE_data.csv"
+    # path_model = "trained_models/BEST MODELS/GRU_layers_best_day_ahead.pt"
+
     batch_size = 64
     x_history_length = 128
     [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
@@ -131,20 +137,22 @@ def test_GRU():
     n_layers = 2
     hidden_dim = 256
 
-    # PATH = "code/trained_models/2023-06-09 19-17-48/GRU_layers_2_hidden_256_epoch_2_batch_64_history_128.pt"
-
-    PATH = "trained_models/2023-06-15 20-10-32/GRU_layers_best.pt"
-
     GRUmodel = GRUNet(input_dim, hidden_dim, output_dim, n_layers)
-    GRUmodel.load_state_dict(torch.load(PATH))
+    GRUmodel.load_state_dict(torch.load(path_model))
     GRUmodel.eval()
     bias = calculateBiasGRU(GRUmodel, test_loader, label_transform)
-    print("bias = ", bias)
-    # inference_on_dataset_GRU(GRUmodel, test_loader, label_transform)
+    inference_on_dataset_GRU(GRUmodel, test_loader, label_transform)
 
 
 def test_Lipschitz():
+    # best model intraday
+    # path_data = "../real_time_data/TH_NP15_data.csv"
+    # path_model = "trained_models/BEST MODELS/LIP_layers_best_intraday.pt"
+
+    # best model day-ahead
     path_data = "../day_ahead_data/PGAE_data.csv"
+    path_model = "trained_models/BEST MODELS/LIP_layers_best_day_ahead.pt"
+
     batch_size = 128
     x_history_length = 128
     [train_loader, val_loader, test_loader], label_transform = load_data(path_data, batch_size, x_history_length)
@@ -155,15 +163,16 @@ def test_Lipschitz():
     output_dim = 1
     hidden_dim = 256
 
-    PATH = "trained_models/BEST MODELS/DAY AHEAD/LIP_layers_best.pt"
-
     LipschitzModel = LipschitzNetWithBatches(input_dim, hidden_dim, output_dim, 0.85, 0.85, 0.01, 0.01, dt=0.01)
-    LipschitzModel.load_state_dict(torch.load(PATH))
+    LipschitzModel.load_state_dict(torch.load(path_model))
     LipschitzModel.eval()
     LipschitzModel.init_hidden()
     calculateBiasLipschitz(LipschitzModel, test_loader, label_transform)
-    # inference_on_dataset_Lipschitz(LipschitzModel, test_loader, label_transform)
+    inference_on_dataset_Lipschitz(LipschitzModel, test_loader, label_transform)
 
 
 if __name__ == "__main__":
-    test_GRU()
+    # test_GRU()
+    test_Lipschitz()
+
+    plt.show()

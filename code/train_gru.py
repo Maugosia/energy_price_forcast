@@ -87,14 +87,14 @@ if __name__ == "__main__":
         batch_size = 64
         x_history_length = 128
         hid_dim = 256
-        epochs = 20
+        epochs = 1
         out_dim = 1
         num_of_layers = 2
 
         # PATHS
         # path_data = "../day_ahead_data/PGAE_data.csv"
         path_data = "../real_time_data/TH_NP15_data.csv"
-        folder_name = os.path.join("trained_models", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
+        folder_name = os.path.join("trained_models", "gruNET", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
         os.makedirs(folder_name)
         data_file_path = folder_name + "/data.txt"
         print("saving results to folder: ", folder_name)
