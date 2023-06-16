@@ -29,6 +29,7 @@ def plot_evaluation_over_time(data_lists, label_lists, title, evaluation_type):
 
 def inference_on_dataset_GRU(model, test_data_loader, scaler, batch=64):
     criterion = nn.MSELoss()
+    criterion = nn.Loss
     avg_loss = 0
     h = model.init_hidden(batch)
 
@@ -88,6 +89,35 @@ def inference_on_dataset_Lipschitz(model, test_data_loader, scaler):
     return avg_loss / len(test_data_loader)
 
 
+def calculateBiasGRU(model, test_data_loader, scaler, batch=64):
+    criterion = nn.MSELoss()
+    biasSum = 0
+    for x, label in test_data_loader:
+        h = h.data
+        model.zero_grad()
+
+        out, h = model(x.to(DEVICE).float(), h)
+
+        label = torch.from_numpy(scaler.inverse_transform(label))
+        out = torch.from_numpy(scaler.inverse_transform(out.detach().numpy()))
+        biasSum = biasSum + torch.sum(torch.sub(label, out))
+    bias = biasSum / len(test_data_loader) * batch
+    print("Bias: ", bias)
+    return bias
+
+
+def calculateBiasLipschitz(model, test_data_loader, scaler, batch=128):
+    biasSum = 0
+    for x, label in test_data_loader:
+        out = model(x.to(DEVICE).float())
+
+        label = torch.from_numpy(scaler.inverse_transform(label))
+        out = torch.from_numpy(scaler.inverse_transform(out.detach().numpy()))
+        biasSum = biasSum + torch.sum(torch.sub(label, out))
+    bias = biasSum/(len(test_data_loader)*batch)
+    print("Bias: ", bias)
+    return bias
+
 def test_GRU():
     path_data = "../day_ahead_data/PGAE_data.csv"
     batch_size = 64
@@ -122,13 +152,14 @@ def test_Lipschitz():
     output_dim = 1
     hidden_dim = 256
 
-    PATH = "trained_models/lipschitzNET/2023-06-14 18-05-27/Lip_layers_1_hidden_256_epoch_4_batch_128_history_128.pt"
+    PATH = "trained_models/BEST MODELS/DAY AHEAD/LIP_layers_best.pt"
 
     LipschitzModel = LipschitzNetWithBatches(input_dim, hidden_dim, output_dim, 0.85, 0.85, 0.01, 0.01, dt=0.01)
     LipschitzModel.load_state_dict(torch.load(PATH))
     LipschitzModel.eval()
     LipschitzModel.init_hidden()
-    inference_on_dataset_Lipschitz(LipschitzModel, test_loader, label_transform)
+    calculateBiasLipschitz(LipschitzModel, test_loader, label_transform)
+    #inference_on_dataset_Lipschitz(LipschitzModel, test_loader, label_transform)
 
 
 if __name__ == "__main__":
