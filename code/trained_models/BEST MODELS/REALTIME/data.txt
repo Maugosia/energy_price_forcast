@@ -1,7 +1,0 @@
-data path = ../real_time_data/TH_NP15_data.csv
-lr = 0.0001
-bat1ch_size = 128
-x history length = 128
-epochs = 10
-
-MSE on test = 12317.577005004883
