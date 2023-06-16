@@ -20,6 +20,9 @@ def plot_temporal_relation(myData, x_ticks_step, yScale):
         month += 1
 
     plt.grid()
+    plt.title("Zmiany cen energii na rynku intraday", fontsize=30)
+    plt.xlabel("Czas", fontsize=20)
+    plt.ylabel("Cena [$]", fontsize=20)
     plt.yscale(yScale)
     plt.xticks(np.arange(0, len(myData["date"]), x_ticks_step), labels=myLabels)
     plt.show()
@@ -28,6 +31,9 @@ def plot_temporal_relation(myData, x_ticks_step, yScale):
 def plot_histogram(myData, binsCount, yScale):
     plt.figure()
     n, bins, patches = plt.hist(myData["price"], bins=binsCount)
+    plt.title("Histogram cen na rynku intraday", fontsize=30)
+    plt.xlabel("Cena [$])", fontsize=20)
+    plt.ylabel("Ilość punktów danych (skala log)", fontsize=20)
     plt.xticks(bins)
     plt.yscale(yScale)
     plt.grid()
@@ -36,8 +42,8 @@ def plot_histogram(myData, binsCount, yScale):
 
 if __name__ == "__main__":
 
-    path_data = "../day_ahead_data/PGAE_data.csv"
-    data = pd.read_csv(path_data, sep=" |,", engine='python', names=["date", "time", "am-pm", "price", "zone"], skiprows=[0])
+    path_data = "../real_time_data/TH_NP15_data.csv"
+    data = pd.read_csv(path_data, sep=" |,", engine='python', names=["date", "time", "am-pm", "price", "zone"], skiprows=[0]).head(54912)
     
     print("Min value", min(data["price"]))
     print("Max value", max(data["price"]))
@@ -49,6 +55,6 @@ if __name__ == "__main__":
     print("Wąs górny", wąsG)
     count = sum(map(lambda x1: x1 > wąsG, data["price"]))
     print(count, "wartości odstających z", len(data["price"]), "(", int(count * 100 / len(data["price"])), "%)")
-
-    #plot_temporal_relation(data, 720, "linear")
+    # day ahead =720; realtime =8640
+    plot_temporal_relation(data, 8640, "linear")
     plot_histogram(data, 20, "log")
