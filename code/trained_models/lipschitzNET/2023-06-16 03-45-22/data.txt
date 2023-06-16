@@ -1,0 +1,6 @@
+lr = 1e-05
+bat1ch_size = 128
+x history length = 128
+epochs = 10
+
+MSE on test = 6840.861567239201

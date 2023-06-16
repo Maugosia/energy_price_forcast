@@ -92,7 +92,7 @@ def train(training_data_loader, validation_data_loader, folder_path, learning_ra
 
 
 if __name__ == "__main__":
-    for lr in [0.001, 0.0001]:
+    for lr in [0.0001]:
         # PARAMS
         batch_size = 128
         x_history_length = 128
@@ -101,12 +101,13 @@ if __name__ == "__main__":
         output_dim = 1
 
         # PATHS
-        path_data = "../day_ahead_data/PGAE_data.csv"
+        path_data = "../real_time_data/TH_NP15_data.csv"
         folder_name = os.path.join("trained_models", "lipschitzNET", datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
         os.makedirs(folder_name)
         print("saving results to folder: ", folder_name)
         data_file_path = folder_name + "/data.txt"
         with open(data_file_path, 'w') as f:
+            f.write("data path = {}\n".format(path_data))
             f.write("lr = {}\n".format(lr))
             f.write("bat1ch_size = {}\n".format(batch_size))
             f.write("x history length = {}\n".format(x_history_length))
@@ -131,6 +132,6 @@ if __name__ == "__main__":
         best_model.load_state_dict(torch.load(folder_name + "/LIP_layers_best.pt"))
         best_model.eval()
 
-        mse_test = inference_on_dataset_Lipschitz(best_model, test_loader, label_transform, batch_size)
+        mse_test = inference_on_dataset_Lipschitz(best_model, test_loader, label_transform)
         with open(data_file_path, 'a') as f:
             f.write("\nMSE on test = {}\n".format(mse_test))

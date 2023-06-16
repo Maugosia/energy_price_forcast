@@ -1,0 +1,4 @@
+lr = 0.0001
+bat1ch_size = 128
+x history length = 128
+epochs = 1
